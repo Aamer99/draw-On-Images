@@ -2,16 +2,16 @@ import "./App.css";
 import React, { useEffect, useRef, useState } from "react";
 const App = () => {
   const [image, setImage] = useState("");
-  const [imageURL, setImageURL] = useState("");
   const [showUploadedImage, setUploadedImage] = useState(false);
+  const [isDraw, setIsDraw] = useState(false);
+  const [isDrawRectangle, setIsDrawRectangle] = useState(false);
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
   const canvasOffsetX = useRef(null);
   const canvasOffsetY = useRef(null);
   const startX = useRef(null);
   const startY = useRef(null);
-  const [isDraw, setIsDraw] = useState(false);
-  const [isDrawRectangle, setIsDrawRectangle] = useState(false);
+
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
   const [imgData, setImageData] = useState("");
@@ -33,33 +33,38 @@ const App = () => {
 
   const startDraw = ({ nativeEvent }) => {
     const { offsetX, offsetY } = nativeEvent;
+
     contextRef.current.beginPath();
     contextRef.current.moveTo(offsetX, offsetY);
     contextRef.current.lineTo(offsetX, offsetY);
     contextRef.current.stroke();
+
     nativeEvent.preventDefault();
-    setIsDraw(true);
+
     setOffsetX(offsetX + 5);
     setOffsetY(offsetY - 5);
+    setIsDraw(true);
   };
 
   const startDrawRectangle = ({ nativeEvent }) => {
-    console.log("F");
     const { offsetX, offsetY } = nativeEvent;
+
     nativeEvent.preventDefault();
     nativeEvent.stopPropagation();
 
     startX.current = offsetX - canvasOffsetX.current;
     startY.current = offsetY - canvasOffsetY.current;
 
-    setIsDraw(true);
     setOffsetX(offsetX + 5);
     setOffsetY(offsetY - 5);
+    setIsDraw(true);
   };
+
   const drawRectangle = ({ nativeEvent }) => {
     if (!isDraw) {
       return;
     }
+
     const { offsetX, offsetY } = nativeEvent;
 
     const newX = offsetX - canvasOffsetX.current;
@@ -94,6 +99,7 @@ const App = () => {
 
     contextRef.current.lineTo(offsetX, offsetY);
     contextRef.current.stroke();
+
     nativeEvent.preventDefault();
   };
 
@@ -101,15 +107,16 @@ const App = () => {
     const context = canvasRef.current.getContext("2d");
     context.closePath();
     context.lineWidth = 0.5;
-    context.strokeStyle = "blue";
+    context.strokeStyle = "red";
+    // generate id for the draw
     let id = Math.floor(Math.random() * 1000);
     contextRef.current.strokeText(id, offsetX, offsetY);
     setIsDraw(false);
   };
 
-  const saveImage = (event) => {
+  const downloadImage = (event) => {
     let link = event.currentTarget;
-    link.setAttribute("download", "canvas.png");
+    link.setAttribute("download", "drawImage.png");
     let image = canvasRef.current.toDataURL("image/png");
     link.setAttribute("href", image);
   };
@@ -118,7 +125,7 @@ const App = () => {
     setImage(event.target.files[0]);
   }
 
-  function onClickSave() {
+  function onClickUpload() {
     let imageURL = URL.createObjectURL(image);
 
     var background = new Image();
@@ -134,7 +141,6 @@ const App = () => {
       );
     };
 
-    setImageURL(imageURL);
     setUploadedImage(true);
   }
 
@@ -154,7 +160,7 @@ const App = () => {
           accept="image/png, image/jpeg"
           onChange={onchangeImage}
         />
-        <button type="submit" onClick={onClickSave} className="submitButton">
+        <button type="submit" onClick={onClickUpload} className="submitButton">
           Upload Image
         </button>
         <div style={{ padding: "5px" }}>
@@ -191,13 +197,15 @@ const App = () => {
           onMouseUp={stopDraw}
           onMouseLeave={stopDraw}
           hidden={!showUploadedImage}
+          width="500"
+          height="300"
         />
 
         {showUploadedImage && (
           <div>
             <a
               href="download_link"
-              onClick={saveImage}
+              onClick={downloadImage}
               className="submitButton"
             >
               Download
